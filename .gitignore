@@ -1,0 +1,8 @@
+data/
+pytorch-experimenting/
+model_test_scores.csv
+brainscore-submissions/
+cifar-10-batches-py/
+cifar-10-python.tar.gz
+*.pt
+*.pickle
