@@ -4,6 +4,7 @@ from fa_fc import *
 from dfa_fc import *
 from tp_fc import *
 from tp_fc_train import *
+from norse_fc import *
 
 from fun_cifar10 import train_CIFAR10, test_CIFAR10
 from fun_brainscore import *
@@ -13,13 +14,14 @@ import torch
 import torchvision
 
 # Baseline BP model
-train_CIFAR10(simpleModel(), 'FC_Baseline_v2')
-test_CIFAR10(simpleModel(), 'FC_Baseline_v2')
-test_score(model_name = 'FC_Baseline_v2', model_def = simpleModel(), layers_to_consider=['fc1', 'fc2'])
+#train_CIFAR10(simpleModel(), 'FC_Baseline_v2')
+#test_CIFAR10(simpleModel(), 'FC_Baseline_v2')
+#test_score(model_name = 'FC_Baseline_v2', model_def = simpleModel(), layers_to_consider=['fc1', 'fc2'])
 
 # FA model
-#train_CIFAR10(feedbackAlignmentModel(), 'FC_FA_v1')
-#test_score(model_name = 'FC_FA_v1', model_def = feedbackAlignmentModel(), layers_to_consider=['fc1', 'fc2'])
+#train_CIFAR10(feedbackAlignmentModel(), 'FC_FA_v2')
+#test_CIFAR10(feedbackAlignmentModel(), 'FC_FA_v2')
+#test_score(model_name = 'FC_FA_v2', model_def = feedbackAlignmentModel(), layers_to_consider=['fc1', 'fc2'])
 
 # DFA model
 #train_CIFAR10(DFA_CIFAR10(), 'DFA_FC_v1')
@@ -44,3 +46,6 @@ test_score(model_name = 'FC_Baseline_v2', model_def = simpleModel(), layers_to_c
 #train(net=dtp_model, train_loader=trainloader, test_loader=testloader, summary=summary, writer=None, device='cpu', val_loader=None, args=dtp_args)
 
 # STDP SNN
+# try using norse for fc snn
+train_CIFAR10(norse_snn, 'snn_fc_v1', spiking=True, debug=False)
+#test_score(norse_snn, 'snn_fc_v1')

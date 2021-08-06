@@ -6,7 +6,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
-def train_CIFAR10(model, model_name):
+def train_CIFAR10(model, model_name, spiking=False, debug=False):
     """
     Function to train model on CIFAR-10 Image Classification
 
@@ -23,7 +23,7 @@ def train_CIFAR10(model, model_name):
     # Define transformations for dataset
     transform = get_basic_transformation()
 
-    trainset = torchvision.datasets.CIFAR10(root = './data', train = True, transform = transform)
+    trainset = torchvision.datasets.CIFAR10(root = './data', train = True, transform = transform, download=True)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size = 4, shuffle = True, num_workers = 0)
 
     # Define loss function and optimiser
@@ -34,6 +34,7 @@ def train_CIFAR10(model, model_name):
     for epoch in range(25):
 
         running_loss = 0.0
+        full_running_loss = 0.0
 
         for i, data in enumerate(trainloader, 0):
 
@@ -41,7 +42,12 @@ def train_CIFAR10(model, model_name):
 
             optimiser.zero_grad()
 
+            
             outputs = model(inputs)
+            
+            if debug:
+                print("\noutputs are:")
+                print(outputs)
             loss = criterion(outputs, labels)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
@@ -49,6 +55,9 @@ def train_CIFAR10(model, model_name):
 
             # Print average loss every 2000 mini-batches
             running_loss += loss.item()
+            full_running_loss += loss.item()
+            if spiking:
+                print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, full_running_loss/(i+1)))
             if i % 2000 == 1999:
                 print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, running_loss/2000))
                 running_loss = 0.0
@@ -76,7 +85,7 @@ def test_CIFAR10(model, model_name, fun_trained = True):
     transform = get_basic_transformation()
 
     # Load CIFAR-10 test dataset
-    testset = torchvision.datasets.CIFAR10(root = './data', train = False, download = False, transform = transform)
+    testset = torchvision.datasets.CIFAR10(root = './data', train = False, download = True, transform = transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size = 4, shuffle = False, num_workers = 0)
 
     # Load trained model, if trained model is not supplied by the 'model' argument (as indicated by fun_trained)

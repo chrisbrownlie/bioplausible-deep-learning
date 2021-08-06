@@ -218,6 +218,6 @@ class DFA_CIFAR10(nn.Module):
         return x
 
 model = DFA_CIFAR10()
-data = torch.randn(4, 3,32,32)
-output = model(data)
-print("output is " + str(output))
+#data = torch.randn(4, 3,32,32)
+#output = model(data)
+#print("output is " + str(output))
