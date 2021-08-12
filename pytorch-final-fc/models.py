@@ -47,5 +47,5 @@ import torchvision
 
 # STDP SNN
 # try using norse for fc snn
-train_CIFAR10(norse_snn, 'snn_fc_v1', spiking=True, debug=False)
-#test_score(norse_snn, 'snn_fc_v1')
+#train_CIFAR10(norse_snn, 'snn_fc_v4', spiking=True, debug=False, epochs = 25)
+test_scores(norse_snn, 'snn_fc_v1', layers_to_consider = ['features.1', 'features.3'], test=False, debug=True)

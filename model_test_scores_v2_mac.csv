@@ -1,0 +1,4 @@
+model_test_scores
+datetime,model_name,test_accuracy,v1,v2,v4,It,Bhv
+,,,,,,,
+2021-08-11 11:18:38.357383,snn_fc_v1,known,error,error,error,error,error

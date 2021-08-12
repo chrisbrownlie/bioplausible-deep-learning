@@ -7,7 +7,7 @@ from model_tools.activations.pytorch import PytorchWrapper
 from brainscore import score_model
 from model_tools.brain_transformation import ModelCommitment
 
-def test_score(model_def, model_name, layers_to_consider = ['fc1', 'fc2'], fun_trained = True):
+def test_scores(model_def, model_name, layers_to_consider = ['fc1', 'fc2'], fun_trained = True, test=True, debug=False):
     """
     Test a trained model on CIFAR10 data, and then try to obtain a score on the public brainscore IT benchmark
 
@@ -17,7 +17,10 @@ def test_score(model_def, model_name, layers_to_consider = ['fc1', 'fc2'], fun_t
     fun_trained -- whether it was trained using the train_CIFAR10 function, if this is false, the model supplied to model_def will be pretrained
     """
     if fun_trained:
-        test_accuracy = test_CIFAR10(model_name = model_name, model = model_def)
+        if test:
+            test_accuracy = test_CIFAR10(model_name = model_name, model = model_def)
+        else:
+            test_accuracy = 'known'
         
         # Construct model path from name
         model_def.load_state_dict(torch.load('./models/' + model_name + '.pth'))
@@ -41,19 +44,99 @@ def test_score(model_def, model_name, layers_to_consider = ['fc1', 'fc2'], fun_t
     )
 
     # Try to obtain test score               
-    public_IT_score = score_model(
-        model_identifier = brain_model.identifier,
-        model = brain_model,
-        benchmark_identifier='dicarlo.MajajHong2015public.IT-pls'
-    )
+    if not debug:
+        try:
+            public_IT_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.MajajHong2015public.IT-pls'
+            )
+            final_IT_score = round(public_IT_score[0].item(), 5)
+        except:
+            final_IT_score = 'error'
+    else:
+        public_IT_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.MajajHong2015public.IT-pls'
+            )
+        final_IT_score = round(public_IT_score[0].item(), 5)
 
-    final_score = round(public_IT_score[0].item(), 5)
+    if not debug:
+        try:
+            public_V1_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='movshon.FreemanZiemba2013public.V1-pls'
+            )
+            final_V1_score = round(public_V1_score[0].item(), 5)
+        except:
+            final_V1_score = 'error'
+    else:
+        public_V1_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='movshon.FreemanZiemba2013public.V1-pls'
+            )
+        final_V1_score = round(public_V1_score[0].item(), 5)
+
+    if not debug:
+        try:
+            public_V2_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='movshon.FreemanZiemba2013public.V2-pls'
+            )
+            final_V2_score = round(public_V2_score[0].item(), 5)
+        except:
+            final_V2_score = 'error'
+    else:
+        public_V2_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='movshon.FreemanZiemba2013public.V2-pls'
+            )
+        final_V2_score = round(public_V2_score[0].item(), 5)
+
+    if not debug:
+        try:
+            public_V4_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.MajajHong2015public.V4-pls'
+            )
+            final_V4_score = round(public_V4_score[0].item(), 5)
+        except:
+            final_V4_score = 'error'
+    else:
+        public_V4_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.MajajHong2015public.V4-pls'
+            )
+        final_V4_score = round(public_V4_score[0].item(), 5)
+
+    if not debug:
+        try:
+            public_bhv_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.Rajalingham2018public-i2n'
+            )
+            final_bhv_score = round(public_bhv_score[0].item(), 5)
+        except:
+            final_bhv_score = 'error'
+    else:
+        public_bhv_score = score_model(
+                model_identifier = brain_model.identifier,
+                model = brain_model,
+                benchmark_identifier='dicarlo.Rajalingham2018public-i2n'
+            )
+        final_bhv_score = round(public_bhv_score[0].item(), 5)
 
     # Log result of scoring
-    with open('model_test_scores.csv','a') as log:
-        log.write('\n' + str(datetime.datetime.now()) + ',' + model_name + ',' + str(test_accuracy) + ',' + str(final_score))
-
-    print("Brain score for public benchmark: " + str(final_score))
+    with open('model_test_scores_v2_mac.csv','a') as log:
+        log.write('\n' + str(datetime.datetime.now()) + ',' + model_name + ',' + str(test_accuracy) + ',' + str(final_V1_score) + ',' + str(final_V2_score) + ',' + str(final_V4_score) + ',' + str(final_IT_score) + ',' + str(final_bhv_score))
 
     # Return result
-    return final_score
+    return test_accuracy

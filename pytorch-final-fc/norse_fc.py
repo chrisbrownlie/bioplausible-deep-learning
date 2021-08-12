@@ -44,7 +44,7 @@ class simpleSNN(nn.Module):
         return x
 
 norse_snn = simpleSNN()
-data = torch.randn(4, 3, 32, 32) # 8 batches, 3 channels, 28x28 pixels
+data = torch.randn(4, 3, 32, 32) # 4 batches, 3 channels, 28x28 pixels
 output = norse_snn(data)      # Provides a tuple (tensor (8, 10), neuron state)
 #print("snn output is:")
 #print(output)

@@ -6,3 +6,7 @@ cifar-10-batches-py/
 cifar-10-python.tar.gz
 *.pt
 *.pickle
+amenv/
+runs/
+.DS_store
+.vscode

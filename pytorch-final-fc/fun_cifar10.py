@@ -6,7 +6,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
-def train_CIFAR10(model, model_name, spiking=False, debug=False):
+def train_CIFAR10(model, model_name, spiking=False, debug=False, epochs = 1):
     """
     Function to train model on CIFAR-10 Image Classification
 
@@ -31,7 +31,7 @@ def train_CIFAR10(model, model_name, spiking=False, debug=False):
     optimiser = torch.optim.SGD(model.parameters(), lr = 0.001, momentum = 0.9)
 
     # Perform training
-    for epoch in range(25):
+    for epoch in range(epochs):
 
         running_loss = 0.0
         full_running_loss = 0.0
@@ -50,7 +50,8 @@ def train_CIFAR10(model, model_name, spiking=False, debug=False):
                 print(outputs)
             loss = criterion(outputs, labels)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
+            if not spiking:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
             optimiser.step()
 
             # Print average loss every 2000 mini-batches
