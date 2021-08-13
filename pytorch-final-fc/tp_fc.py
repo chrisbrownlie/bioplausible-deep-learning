@@ -1414,7 +1414,6 @@ class DTPLayer(nn.Module):
         Returns:
             The mini-batch of output activations of the layer.
         """
-
         h = x.mm(self.weights.t())
         if self.bias is not None:
             h += self.bias.unsqueeze(0).expand_as(h)
@@ -1936,21 +1935,32 @@ class DTPNetwork(nn.Module):
             fb_activation (str): activation function indicator for the feedback
                 path of the hidden layers
         """
-        n_all = [n_in] + n_hidden + [n_out]
         layers = nn.ModuleList()
-        for i in range(1, len(n_all) - 1):
-            layers.append(
-                DTPLayer(n_all[i - 1], n_all[i], bias=bias,
+
+        fc1 = DTPLayer(3072, 1536, bias=bias,
                          forward_activation=activation,
                          feedback_activation=fb_activation,
                          forward_requires_grad=forward_requires_grad,
-                         initialization=initialization
-                         ))
-        layers.append(DTPLayer(n_all[-2], n_all[-1], bias=bias,
-                               forward_activation=output_activation,
-                               feedback_activation=fb_activation,
-                               forward_requires_grad=forward_requires_grad,
-                               initialization=initialization))
+                         initialization=initialization)
+        self.fc1 = fc1
+
+        fc2 = DTPLayer(1536, 256, bias=bias,
+                         forward_activation=activation,
+                         feedback_activation=fb_activation,
+                         forward_requires_grad=forward_requires_grad,
+                         initialization=initialization)
+        self.fc2 = fc2
+
+        fc3 = DTPLayer(256, 10, bias=bias,
+                         forward_activation=activation,
+                         feedback_activation=fb_activation,
+                         forward_requires_grad=forward_requires_grad,
+                         initialization=initialization)
+        self.fc3 = fc3
+                         
+        layers.append(fc1)
+        layers.append(fc2)
+        layers.append(fc3)
         return layers
 
     @property
@@ -2000,11 +2010,14 @@ class DTPNetwork(nn.Module):
         returns:
             y: the output of the network
             """
+        x = x.view(x.size(0), -1)
         self.input = x
         y = x
 
-        for layer in self.layers:
-            y = layer.forward(y)
+        y = self.fc1(y)
+        y = self.fc2(y)
+        y = self.fc3(y)
+        
 
         # the output of the network requires a gradient in order to compute the
         # target (in compute_output_target() )
@@ -2771,19 +2784,20 @@ dtp_args = Namespace(network_type='DTP',
         batch_size= 4,
         dataset= 'cifar10',
         epochs=25,
-        hidden_activation='tanh',
+        hidden_activation='relu',
         lr=0.01,
-        momentum=0.0,
+        momentum=False,
         no_val_set=True,
-        num_hidden=3,
+        num_hidden=2,
         num_test=10000,
         num_train=50000,
-        size_hidden=500,
+        size_hidden=[1536, 256],
         size_input=3072,
         size_output=10,
         optimizer='SGD',
         output_activation='softmax',
         classification=True,
+        evaluate=True, # Set to True so that training isn't cut short for low accuracy models
 
         # The rest are kept as their default values
         beta1= 0.99, 
@@ -2798,10 +2812,9 @@ dtp_args = Namespace(network_type='DTP',
         epochs_fb=1,
         epsilon=1e-4,
         epsilon_fb=1e-4,
-        evaluate=False,
         extra_fb_epochs=0,
         extra_fb_minibatches=0,
-        fb_activation='tanh',
+        fb_activation='relu',
         feedback_wd=0.0,
         forward_wd=0.0,
         freeze_BPlayers=False,
@@ -2811,7 +2824,7 @@ dtp_args = Namespace(network_type='DTP',
         gn_damping=0.,
         gn_damping_hpsearch=False,
         gn_damping_training=0.0,
-        hidden_fb_activation='tanh',
+        hidden_fb_activation='relu',
         hidden_layers=None,
         hpsearch=False,
         initialization='xavier',

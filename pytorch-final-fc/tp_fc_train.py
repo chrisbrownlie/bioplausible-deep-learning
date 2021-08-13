@@ -28,6 +28,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from tensorboardX import SummaryWriter
 import pandas as pd
+import datetime
 
 from tp_fc import *
 import pickle
@@ -214,6 +215,10 @@ def train(args, device, train_loader, net, writer, test_loader, summary,
         # save epoch results in summary dict
         train_var.epoch_losses = np.append(train_var.epoch_losses,
                                            train_var.epoch_loss)
+
+        with open('dtp_model_training_loss.csv','a') as log:
+            log.write('\n' + str(datetime.datetime.now()) + ',' + 'DTP (loss is epoch loss)' + ',' + str(e) + ',' + 'average for epoch' + ',' + str(train_var.epoch_loss))
+        
         train_var.test_losses = np.append(train_var.test_losses,
                                           train_var.test_loss)
 
@@ -362,6 +367,7 @@ def train_parallel(args, train_var, device, train_loader, net, writer):
             train_forward_parameters(args, net, predictions, targets,
                                      train_var.loss_function,
                                      train_var.forward_optimizer)
+
         if not args.freeze_fb_weights:
             train_feedback_parameters(args, net, train_var.feedback_optimizer)
 

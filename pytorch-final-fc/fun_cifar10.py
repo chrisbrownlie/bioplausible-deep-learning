@@ -4,9 +4,11 @@ import torchvision
 from pathlib import Path
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from tp_fc_train import *
+import datetime
 writer = SummaryWriter()
 
-def train_CIFAR10(model, model_name, spiking=False, debug=False):
+def train_CIFAR10(model, model_name, spiking=False, debug=False, meulemans=False):
     """
     Function to train model on CIFAR-10 Image Classification
 
@@ -31,36 +33,51 @@ def train_CIFAR10(model, model_name, spiking=False, debug=False):
     optimiser = torch.optim.SGD(model.parameters(), lr = 0.001, momentum = 0.9)
 
     # Perform training
-    for epoch in range(25):
+    if meulemans:
+        # Models using Meulemans et al implementation is trained differently
+        # Set args (dtp_args specified in tp_fc.py)
+        summary = setup_summary_dict(dtp_args)
 
-        running_loss = 0.0
-        full_running_loss = 0.0
+        testset = torchvision.datasets.CIFAR10(root = './data', train = False, download = False, transform = transform)
+        testloader = torch.utils.data.DataLoader(testset, batch_size = 4, shuffle = False, num_workers = 0)
+        
+        train(net=model, train_loader=trainloader, test_loader=testloader, summary=summary, writer=None, device='cpu', val_loader=None, args=dtp_args)
+    else:
+        for epoch in range(25):
 
-        for i, data in enumerate(trainloader, 0):
+            running_loss = 0.0
+            full_running_loss = 0.0
 
-            inputs,labels = data
+            for i, data in enumerate(trainloader, 0):
 
-            optimiser.zero_grad()
+                inputs,labels = data
 
-            
-            outputs = model(inputs)
-            
-            if debug:
-                print("\noutputs are:")
-                print(outputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
-            optimiser.step()
+                optimiser.zero_grad()
 
-            # Print average loss every 2000 mini-batches
-            running_loss += loss.item()
-            full_running_loss += loss.item()
-            if spiking:
-                print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, full_running_loss/(i+1)))
-            if i % 2000 == 1999:
-                print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, running_loss/2000))
-                running_loss = 0.0
+                
+                outputs = model(inputs)
+                
+                if debug:
+                    print("\noutputs are:")
+                    print(outputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0, norm_type=2)
+                optimiser.step()
+
+                # Print average loss every 2000 mini-batches
+                running_loss += loss.item()
+                full_running_loss += loss.item()
+                if i in [0,1,12490,12500]:
+                    # Log the loss
+                    with open('model_training_loss.csv','a') as log:
+                        log.write('\n' + str(datetime.datetime.now()) + ',' + model_name + ',' + str(epoch) + ',' + str(i) + ',' + str(full_running_loss/(i+1)))
+
+                if spiking:
+                    print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, full_running_loss/(i+1)))
+                if i % 2000 == 1999:
+                    print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, running_loss/2000))
+                    running_loss = 0.0
 
     print("Finished training")
 
@@ -70,7 +87,7 @@ def train_CIFAR10(model, model_name, spiking=False, debug=False):
 
 
 
-def test_CIFAR10(model, model_name, fun_trained = True):
+def test_CIFAR10(model, model_name, fun_trained = True, meulemans=False):
     """
     Function to test a model that has been trained on CIFAR-10 image classification
 
@@ -92,21 +109,27 @@ def test_CIFAR10(model, model_name, fun_trained = True):
     if fun_trained:
         model.load_state_dict(torch.load('./models/' + model_name + '.pth'))
     
-    # Print results
-    correct = 0
-    total = 0
-    # since we're not training, we don't need to calculate the gradients for our outputs
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            # calculate outputs by running images through the network
-            outputs = model(images)
-            # the class with the highest energy is what we choose as prediction
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+    if meulemans:
+        # Models using Meulemans et al implementation is trained differently
+        # Set args (dtp_args specified in tp_fc.py)
+        accuracy, loss = test(args=dtp_args, device = 'cpu', net = model, test_loader=testloader, loss_function = torch.nn.CrossEntropyLoss())
+    else:
+        # Print results
+        correct = 0
+        total = 0
+        # since we're not training, we don't need to calculate the gradients for our outputs
+        with torch.no_grad():
+            for data in testloader:
+                images, labels = data
+                # calculate outputs by running images through the network
+                outputs = model(images)
+                # the class with the highest energy is what we choose as prediction
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * correct / total))
+        accuracy = 100 * correct / total
 
-    return(100 * correct / total)
+        print('Accuracy of the network on the 10000 test images: %d %%' % (accuracy))
+
+    return accuracy
