@@ -10,3 +10,5 @@ amenv/
 runs/
 .DS_store
 .vscode
+models/
+alenv/

@@ -4,6 +4,7 @@ import torchvision
 from pathlib import Path
 import torch
 from torch.utils.tensorboard import SummaryWriter
+import datetime
 writer = SummaryWriter()
 
 def train_CIFAR10(model, model_name, spiking=False, debug=False, epochs = 1):
@@ -57,11 +58,19 @@ def train_CIFAR10(model, model_name, spiking=False, debug=False, epochs = 1):
             # Print average loss every 2000 mini-batches
             running_loss += loss.item()
             full_running_loss += loss.item()
+
+            if i in [0,12490,12499]:
+                with open('model_training_loss.csv', 'a') as log:
+                    log.write('\n' + str(datetime.datetime.now()) + ',snn_fc,' + str(epoch) + ',' + str(i) + ',' + str(full_running_loss/(i+1)))
+
             if spiking:
                 print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, full_running_loss/(i+1)))
             if i % 2000 == 1999:
                 print('[%d, %5d] loss: %.3f' % (epoch+1, i+1, running_loss/2000))
                 running_loss = 0.0
+        epoch_path = "./models/snn_fc_epoch" + str(epoch+1) + ".pth"
+        torch.save(model.state_dict(), epoch_path)
+        print("Successfully saved state after epoch" + str(epoch+1) + "!")
 
     print("Finished training")
 
