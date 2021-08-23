@@ -1,4 +1,4 @@
-### Code from Meulemans et al (2020)
+### Code from https://github.com/meulemansalex/theoretical_framework_for_target_propagation
 
 
 ## UTILS functions
