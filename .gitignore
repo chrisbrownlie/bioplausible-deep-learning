@@ -8,4 +8,4 @@ cifar-10-python.tar.gz
 *.pickle
 runs/
 *.csv
-models/
+models/archive
